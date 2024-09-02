@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -46,20 +48,25 @@ public class StatClient {
     public ResponseEntity<List<ViewStatsDto>> getStats(LocalDateTime start, LocalDateTime end,
                                                        List<String> uris, boolean unique) {
         log.info("Getting stats for {}", uris);
-        return restClient.get()
-                .uri(uriBuilder ->
-                        uriBuilder.path("/stats")
-                                .queryParam("start", start.format(formatter))
-                                .queryParam("end", end.format(formatter))
-                                .queryParam("uris", uris)
-                                .queryParam("unique", unique)
-                                .build())
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError,
-                        (request, response) ->
-                                log.error("Getting stats for {} with error code {}", uris, response.getStatusCode()))
-                .body(new ParameterizedTypeReference<>() {
-                });
+        try {
+            return restClient.get()
+                    .uri(uriBuilder ->
+                            uriBuilder.path("/stats")
+                                    .queryParam("start", start.format(formatter))
+                                    .queryParam("end", end.format(formatter))
+                                    .queryParam("uris", uris)
+                                    .queryParam("unique", unique)
+                                    .build())
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError,
+                            (request, response) ->
+                                    log.error("Getting stats for {} with error code {}", uris, response.getStatusCode()))
+                    .body(new ParameterizedTypeReference<>() {
+                    });
+        } catch (Exception e) {
+            log.error("Getting stats for {} failed", uris, e);
+            return new ResponseEntity<>(Collections.emptyList(), HttpStatus.SERVICE_UNAVAILABLE);
+        }
     }
 
     private EndpointHitDto toDto(String app, HttpServletRequest request) {
