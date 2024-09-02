@@ -2,6 +2,7 @@ package ru.practicum;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -18,10 +19,12 @@ import java.util.List;
 public class StatClient {
 
     private final RestClient restClient;
+
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public StatClient(String serverUrl) {
+    public StatClient(@Value("${stat-server.url}") String serverUrl) {
         this.restClient = RestClient.create(serverUrl);
+        log.info("Server stat run URL: {}", serverUrl);
     }
 
     public void saveHit(String app, HttpServletRequest request) {
