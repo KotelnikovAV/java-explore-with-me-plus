@@ -16,7 +16,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleNotValidationData(Throwable e) {
         log.error("An exception has occurred Throwable. {}", e.getMessage());
-        return new ErrorResponse( "INTERNAL_SERVER_ERROR","Unexpected error",
+        return new ErrorResponse("INTERNAL_SERVER_ERROR","Unexpected error",
                 "An unexpected error has occurred", LocalDateTime.now());
     }
 }

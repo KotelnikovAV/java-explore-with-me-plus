@@ -6,5 +6,5 @@ import ru.practicum.ViewStatsDto;
 
 @Mapper(componentModel = "spring")
 public interface ViewStatsMapper {
-    ViewStatsDto viewStatsToViewStatsDto (ViewStats viewStats);
+    ViewStatsDto viewStatsToViewStatsDto(ViewStats viewStats);
 }
