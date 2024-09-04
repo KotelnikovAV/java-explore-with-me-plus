@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import ru.practicum.EndpointHit.model.EndpointHit;
 import ru.practicum.EndpointHit.repository.EndpointHitRepository;
 import ru.practicum.ViewStats.model.ViewStats;
@@ -12,8 +13,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -36,60 +35,22 @@ public class EndpointHitServiceImpl implements EndpointHitService {
         log.info("The beginning of the process of obtaining statistics of views");
         List<ViewStats> listViewStats;
 
+        if (CollectionUtils.isEmpty(uris)) {
+            uris = endpointHitRepository.findUniqueUri();
+        }
+
         if (unique) {
-            listViewStats = findByUnique(start, end, uris);
+            listViewStats = endpointHitRepository.findViewStatsByStartAndEndAndUriAndUniqueIp(decodeTime(start),
+                    decodeTime(end),
+                    uris);
         } else {
-            listViewStats = findByNotUnique(start, end, uris);
+            listViewStats = endpointHitRepository.findViewStatsByStartAndEndAndUri(decodeTime(start),
+                    decodeTime(end),
+                    uris);
         }
 
         log.info("Getting the statistics of the views is completed");
         return listViewStats;
-    }
-
-    private List<ViewStats> findByUnique(String start, String end, List<String> uris) {
-        List<ViewStats> listViewStats = new ArrayList<>();
-
-        if (uris == null || uris.isEmpty()) {
-            uris = endpointHitRepository.findUniqueUri();
-        }
-
-        for (String uri : uris) {
-            long hit = endpointHitRepository.findCountHitByStartAndEndAndUriAndUniqueIp(decodeTime(start),
-                    decodeTime(end),
-                    uri);
-            ViewStats viewStats = ViewStats.builder()
-                    .app("ewm-main-service")
-                    .uri(uri)
-                    .hits(hit)
-                    .build();
-            listViewStats.add(viewStats);
-        }
-
-        return listViewStats.stream()
-                .sorted(Comparator.comparingLong(value -> value.getHits() * -1))
-                .toList();
-    }
-
-    private List<ViewStats> findByNotUnique(String start, String end, List<String> uris) {
-        List<ViewStats> listViewStats = new ArrayList<>();
-
-        if (uris == null || uris.isEmpty()) {
-            uris = endpointHitRepository.findUniqueUri();
-        }
-
-        for (String uri : uris) {
-            long hit = endpointHitRepository.findCountHitByStartAndEndAndUri(decodeTime(start), decodeTime(end), uri);
-            ViewStats viewStats = ViewStats.builder()
-                    .app("ewm-main-service")
-                    .uri(uri)
-                    .hits(hit)
-                    .build();
-            listViewStats.add(viewStats);
-        }
-
-        return listViewStats.stream()
-                .sorted(Comparator.comparingLong(value -> value.getHits() * -1))
-                .toList();
     }
 
     private LocalDateTime decodeTime(String time) {

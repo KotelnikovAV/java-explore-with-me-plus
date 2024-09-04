@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleNotValidationData(Throwable e) {
+    public ErrorResponse handleNotValidationData(Exception e) {
         log.error("An exception has occurred Throwable. {}", e.getMessage());
         return new ErrorResponse("INTERNAL_SERVER_ERROR","Unexpected error",
                 "An unexpected error has occurred", LocalDateTime.now());
