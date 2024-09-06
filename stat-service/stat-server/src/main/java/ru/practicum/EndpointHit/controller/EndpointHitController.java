@@ -37,8 +37,6 @@ public class EndpointHitController {
         log.info("Received GET request for statistics with parameters start = {}, end = {}, uris = {}, " +
                 "unique = {}", start, end, uris, unique);
         List<ViewStats> viewStats = endpointHitService.findByParams(start, end, uris, unique);
-        return viewStats.stream()
-                .map(viewStatsMapper::viewStatsToViewStatsDto)
-                .toList();
+        return viewStatsMapper.listViewStatsToListViewStatsDto(viewStats);
     }
 }

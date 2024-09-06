@@ -1,6 +1,8 @@
 package ru.practicum.EndpointHit.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,15 +21,19 @@ public class EndpointHit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank
     @Column
     private String app;
 
+    @NotBlank
     @Column
     private String uri;
 
+    @NotBlank
     @Column
     private String ip;
 
+    @NotNull
     @Column
     private LocalDateTime timestamp;
 }
