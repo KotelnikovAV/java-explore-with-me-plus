@@ -12,17 +12,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+
+import static ru.practicum.Constants.FORMATTER;
 
 @Component
 @Slf4j
 public class StatClient {
 
     private final RestClient restClient;
-
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public StatClient(@Value("${stat-server.url}") String serverUrl) {
         this.restClient = RestClient.create(serverUrl);
@@ -52,8 +51,8 @@ public class StatClient {
             return restClient.get()
                     .uri(uriBuilder ->
                             uriBuilder.path("/stats")
-                                    .queryParam("start", start.format(formatter))
-                                    .queryParam("end", end.format(formatter))
+                                    .queryParam("start", start.format(FORMATTER))
+                                    .queryParam("end", end.format(FORMATTER))
                                     .queryParam("uris", uris)
                                     .queryParam("unique", unique)
                                     .build())

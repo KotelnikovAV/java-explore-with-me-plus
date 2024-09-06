@@ -1,5 +1,7 @@
 package ru.practicum;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -9,7 +11,10 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ViewStatsDto {
+    @NotBlank
     String app;
+    @NotBlank
     String uri;
+    @NotNull
     Long hits;
 }
