@@ -1,6 +1,7 @@
 package ru.practicum.category.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -16,6 +17,6 @@ public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     long id;
-    @Column(nullable = false)
+    @NotBlank
     String name;
 }
