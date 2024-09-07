@@ -26,8 +26,8 @@ public interface EndpointHitRepository extends JpaRepository<EndpointHit, Long> 
             "group by eh.app, eh.uri " +
             "order by count(eh.ip) desc")
     List<ViewStats> findViewStatsByStartAndEndAndUri(@Param("start") LocalDateTime start,
-                                                                @Param("end") LocalDateTime end,
-                                                                @Param("uri") List<String> uri);
+                                                     @Param("end") LocalDateTime end,
+                                                     @Param("uri") List<String> uri);
 
     @Query("select distinct eh.uri " +
             "from EndpointHit as eh ")
