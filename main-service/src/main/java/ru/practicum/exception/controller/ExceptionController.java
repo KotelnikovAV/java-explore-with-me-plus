@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import ru.practicum.exception.IntegrityViolationException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.exception.RestrictionsViolationException;
 import ru.practicum.exception.model.ApiError;
 
 import java.time.LocalDateTime;
@@ -52,6 +53,19 @@ public class ExceptionController {
         return ApiError.builder()
                 .status(HttpStatus.CONFLICT.name())
                 .reason("Integrity constraint has been violated")
+                .message(e.getMessage())
+                .timestamp(LocalDateTime.now())
+                .errors(ExceptionUtils.getStackTrace(e))
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleRestrictionsViolationException(RestrictionsViolationException e) {
+        log.error("409 {} ", e.getMessage());
+        return ApiError.builder()
+                .status(HttpStatus.CONFLICT.name())
+                .reason("For the requested operation the conditions are not met.")
                 .message(e.getMessage())
                 .timestamp(LocalDateTime.now())
                 .errors(ExceptionUtils.getStackTrace(e))

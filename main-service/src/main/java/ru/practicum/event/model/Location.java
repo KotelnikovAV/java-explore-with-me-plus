@@ -1,22 +1,28 @@
-package ru.practicum.category.model;
+package ru.practicum.event.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "categories")
-@Setter
+@Table(name = "location")
 @Getter
-@AllArgsConstructor
-@NoArgsConstructor
+@Setter
 @EqualsAndHashCode(of = "id")
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Category {
+public class Location {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
-    @NotBlank
-    String name;
+
+    @NotNull
+    @Column
+    Float lat;
+
+    @NotNull
+    @Column
+    Float lon;
 }
