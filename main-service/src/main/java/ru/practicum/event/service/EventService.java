@@ -1,12 +1,15 @@
 package ru.practicum.event.service;
 
+import jakarta.validation.constraints.Positive;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
 import ru.practicum.event.dto.UpdateEventUserRequest;
+import ru.practicum.event.enums.EventPublicSort;
 import ru.practicum.requests.dto.EventRequestStatusUpdateRequestDto;
 import ru.practicum.requests.dto.ParticipationRequestDto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface EventService {
@@ -23,4 +26,10 @@ public interface EventService {
     List<ParticipationRequestDto> updateRequestByEventId(EventRequestStatusUpdateRequestDto updateRequest,
                                                          long userId,
                                                          long eventId);
+
+    List<EventShortDto> getAllPublicEvents(String text, List<Long> categories, boolean paid,
+                                           LocalDateTime rangeStart, LocalDateTime rangeEnd,
+                                           boolean onlyAvailable, EventPublicSort sort, int from, int size);
+
+    EventShortDto getPublicEventById(long id);
 }

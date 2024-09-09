@@ -1,7 +1,11 @@
 package ru.practicum.event.service;
 
+import com.querydsl.core.BooleanBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -14,6 +18,7 @@ import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
 import ru.practicum.event.dto.UpdateEventUserRequest;
 import ru.practicum.event.dto.mapper.EventMapper;
+import ru.practicum.event.enums.EventPublicSort;
 import ru.practicum.event.model.Event;
 import ru.practicum.event.model.State;
 import ru.practicum.event.repository.EventRepository;
@@ -35,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static ru.practicum.event.model.QEvent.event;
 
 @Service
 @Slf4j
@@ -243,6 +250,63 @@ public class EventServiceImpl implements EventService {
 
         log.info("The requests was updated");
         return requestMapper.listRequestToListParticipationRequestDto(requests);
+    }
+
+    @Override
+    @Transactional
+    public List<EventShortDto> getAllPublicEvents(String text, List<Long> categories, boolean paid,
+                                                  LocalDateTime rangeStart, LocalDateTime rangeEnd,
+                                                  boolean onlyAvailable, EventPublicSort sort, int from, int size) {
+        Page<Event> events;
+        PageRequest pageRequest = getCustomPage(from, size, sort);
+        BooleanBuilder builder = new BooleanBuilder();
+        if (text != null) {
+            builder.and(event.annotation.containsIgnoreCase(text.toLowerCase())
+                    .or(event.description.containsIgnoreCase(text.toLowerCase())));
+        } else if (!CollectionUtils.isEmpty(categories)) {
+            builder.and(event.category.id.in(categories));
+        } else if (rangeStart != null && rangeEnd != null) {
+            builder.and(event.eventDate.between(rangeStart, rangeEnd));
+        } else if (onlyAvailable) {
+            builder.and(event.participantLimit.eq(0L))
+                    .or(event.participantLimit.gt(event.confirmedRequests));
+        }
+        if (builder.getValue() != null) {
+            events = eventRepository.findAll(builder.getValue(), pageRequest);
+        } else {
+            events = eventRepository.findAll(pageRequest);
+        }
+        addViews(events.getContent());
+        return eventMapper.listEventToListEventShortDto(events.getContent());
+    }
+
+    @Override
+    public EventShortDto getPublicEventById(long id) {
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Event with id=" + id + " was not found"));
+        //TODO
+        //событие должно быть опубликовано
+        //информация о событии должна включать в себя количество просмотров и количество подтвержденных запросов
+        return null;
+    }
+
+    private void addViews(List<Event> evt) {
+        //TODO Надо дополнить views
+        List<ViewStatsDto> stats = getViewStats(evt);
+
+
+    }
+
+    private PageRequest getCustomPage(int from, int size, EventPublicSort sort) {
+        if (sort != null) {
+            return switch (sort) {
+                case EVENT_DATE -> PageRequest.of(from, size, Sort.by(Sort.Direction.ASC, "eventDate"));
+                case VIEWS -> PageRequest.of(from, size, Sort.by(Sort.Direction.ASC, "views"));
+            };
+        } else {
+            return PageRequest.of(from, size);
+        }
+
     }
 
     private List<ViewStatsDto> getViewStats(List<Event> events) {

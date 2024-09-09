@@ -78,4 +78,10 @@ public class Event {
     @NotBlank
     @Column
     String title;
+
+    @Column(name = "confirmed_requests")
+    Long confirmedRequests;
+
+    @Transient
+    Long views;
 }
