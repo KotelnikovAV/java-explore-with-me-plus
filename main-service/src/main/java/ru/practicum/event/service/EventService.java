@@ -1,11 +1,8 @@
 package ru.practicum.event.service;
 
-import jakarta.validation.constraints.Positive;
-import ru.practicum.event.dto.EventFullDto;
-import ru.practicum.event.dto.EventShortDto;
-import ru.practicum.event.dto.NewEventDto;
-import ru.practicum.event.dto.UpdateEventUserRequest;
+import ru.practicum.event.dto.*;
 import ru.practicum.event.enums.EventPublicSort;
+import ru.practicum.event.model.State;
 import ru.practicum.requests.dto.EventRequestStatusUpdateRequestDto;
 import ru.practicum.requests.dto.ParticipationRequestDto;
 
@@ -17,7 +14,7 @@ public interface EventService {
 
     EventFullDto findEventById(long userId, long eventId);
 
-    List<EventShortDto> findEventsByUser(long userId, long from, long size);
+    List<EventShortDto> findEventsByUser(long userId, int from, int size);
 
     EventFullDto updateEvent(UpdateEventUserRequest updateEventUserRequest, long userId, long eventId);
 
@@ -32,4 +29,9 @@ public interface EventService {
                                            boolean onlyAvailable, EventPublicSort sort, int from, int size);
 
     EventShortDto getPublicEventById(long id);
+
+    List<EventFullDto> getAllAdminEvents(List<Long> users, State state, List<Long> categories, LocalDateTime rangeStart,
+                                         LocalDateTime rangeEnd, int from, int size);
+
+    EventFullDto updateEventAdmin(UpdateEventAdminRequest updateEventAdminRequest, long eventId);
 }

@@ -1,6 +1,7 @@
 package ru.practicum.event.service;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -13,12 +14,10 @@ import ru.practicum.StatClient;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.category.model.Category;
 import ru.practicum.category.repository.CategoryRepository;
-import ru.practicum.event.dto.EventFullDto;
-import ru.practicum.event.dto.EventShortDto;
-import ru.practicum.event.dto.NewEventDto;
-import ru.practicum.event.dto.UpdateEventUserRequest;
+import ru.practicum.event.dto.*;
 import ru.practicum.event.dto.mapper.EventMapper;
 import ru.practicum.event.enums.EventPublicSort;
+import ru.practicum.event.enums.StateActionAdmin;
 import ru.practicum.event.model.Event;
 import ru.practicum.event.model.State;
 import ru.practicum.event.repository.EventRepository;
@@ -28,7 +27,6 @@ import ru.practicum.requests.dto.EventRequestStatusUpdateRequestDto;
 import ru.practicum.requests.dto.ParticipationRequestDto;
 import ru.practicum.requests.dto.mapper.RequestMapper;
 import ru.practicum.requests.model.Request;
-import ru.practicum.requests.model.RequestView;
 import ru.practicum.requests.model.Status;
 import ru.practicum.requests.repository.RequestsRepository;
 import ru.practicum.user.model.User;
@@ -76,6 +74,7 @@ public class EventServiceImpl implements EventService {
         newEvent.setInitiator(initiator);
         newEvent.setPublishedOn(LocalDateTime.now());
         newEvent.setState(State.PENDING);
+        newEvent.setConfirmedRequests(0L);
 
         Event event = eventRepository.save(newEvent);
         EventFullDto eventFullDto = eventMapper.eventToEventFullDto(event);
@@ -101,7 +100,6 @@ public class EventServiceImpl implements EventService {
         List<ViewStatsDto> viewStats = getViewStats(List.of(event));
 
         EventFullDto eventFullDto = eventMapper.eventToEventFullDto(event);
-        eventFullDto.setConfirmedRequests(requestsRepository.countByEvent(event, Status.CONFIRMED));
 
         if (!CollectionUtils.isEmpty(viewStats)) {
             eventFullDto.setViews(viewStats.getFirst().getHits());
@@ -117,20 +115,21 @@ public class EventServiceImpl implements EventService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<EventShortDto> findEventsByUser(long userId, long from, long size) {
+    public List<EventShortDto> findEventsByUser(long userId, int from, int size) {
         log.info("The beginning of the process of finding a events");
 
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("User with id=" + userId + " was not found");
         }
 
-        List<Event> events = eventRepository.findAllEventsByUserId(userId, from, size);
-        Map<Long, Long> mapEventIdAndCountConfirmedRequests = requestsRepository.countByEventIn(events)
-                .collect(Collectors.toMap(RequestView::getEvent_id, RequestView::getCountRequest));
-        List<ViewStatsDto> viewStatsDto = getViewStats(events);
+        PageRequest pageRequest = PageRequest.of(from, size);
+        BooleanExpression byUserId = event.initiator.id.eq(userId);
+
+        Page<Event> pageEvents = eventRepository.findAll(byUserId, pageRequest);
+        List<Event> events = pageEvents.getContent();
+        setViews(events);
 
         List<EventShortDto> eventsShortDto = eventMapper.listEventToListEventShortDto(events);
-        setConfirmedRequestsAndViewsForList(eventsShortDto, mapEventIdAndCountConfirmedRequests, viewStatsDto);
 
         log.info("The events was found");
         return eventsShortDto;
@@ -231,12 +230,11 @@ public class EventServiceImpl implements EventService {
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
-        long countRequests = requestsRepository.countByEvent(event, Status.CONFIRMED);
 
         if (!(event.getRequestModeration() || event.getParticipantLimit() == 0) && event.getParticipantLimit() <
-                countRequests + updateRequests.getRequestIds().size()) {
+                event.getConfirmedRequests() + updateRequests.getRequestIds().size()) {
             throw new RestrictionsViolationException("The limit on applications for this event has been reached, " +
-                    "there are " + (event.getParticipantLimit() - countRequests) + " free places");
+                    "there are " + (event.getParticipantLimit() - event.getConfirmedRequests()) + " free places");
         }
 
         List<Request> requests = requestsRepository.findByIdIn(updateRequests.getRequestIds());
@@ -247,6 +245,10 @@ public class EventServiceImpl implements EventService {
         }
 
         requests.forEach(request -> request.setStatus(updateRequests.getStatus()));
+
+        if (updateRequests.getStatus().equals(Status.CONFIRMED)) {
+            event.setConfirmedRequests(event.getConfirmedRequests() + updateRequests.getRequestIds().size());
+        }
 
         log.info("The requests was updated");
         return requestMapper.listRequestToListParticipationRequestDto(requests);
@@ -260,17 +262,22 @@ public class EventServiceImpl implements EventService {
         Page<Event> events;
         PageRequest pageRequest = getCustomPage(from, size, sort);
         BooleanBuilder builder = new BooleanBuilder();
+
         if (text != null) {
             builder.and(event.annotation.containsIgnoreCase(text.toLowerCase())
                     .or(event.description.containsIgnoreCase(text.toLowerCase())));
-        } else if (!CollectionUtils.isEmpty(categories)) {
+        }
+        if (!CollectionUtils.isEmpty(categories)) {
             builder.and(event.category.id.in(categories));
-        } else if (rangeStart != null && rangeEnd != null) {
+        }
+        if (rangeStart != null && rangeEnd != null) {
             builder.and(event.eventDate.between(rangeStart, rangeEnd));
-        } else if (onlyAvailable) {
+        }
+        if (onlyAvailable) {
             builder.and(event.participantLimit.eq(0L))
                     .or(event.participantLimit.gt(event.confirmedRequests));
         }
+
         if (builder.getValue() != null) {
             events = eventRepository.findAll(builder.getValue(), pageRequest);
         } else {
@@ -290,10 +297,124 @@ public class EventServiceImpl implements EventService {
         return null;
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public List<EventFullDto> getAllAdminEvents(List<Long> users, State state, List<Long> categories,
+                                                LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
+        Page<Event> pageEvents;
+        PageRequest pageRequest = getCustomPage(from, size, null);
+        BooleanBuilder builder = new BooleanBuilder();
+        if (users != null) {
+            builder.and(event.initiator.id.in(users));
+        }
+        if (state != null) {
+            builder.and(event.state.eq(state));
+        }
+        if (!CollectionUtils.isEmpty(categories)) {
+            builder.and(event.category.id.in(categories));
+        }
+        if (rangeStart != null && rangeEnd != null) {
+            if (rangeStart.isAfter(rangeEnd)) {
+                throw new RestrictionsViolationException("The start time must be before the end time");
+            }
+
+            builder.and(event.eventDate.between(rangeStart, rangeEnd));
+        } else if (rangeStart == null && rangeEnd != null) {
+            builder.and(event.eventDate.between(LocalDateTime.MIN, rangeEnd));
+        } else if (rangeStart != null) {
+            builder.and(event.eventDate.between(rangeStart, LocalDateTime.MAX));
+        }
+
+        if (builder.getValue() != null) {
+            pageEvents = eventRepository.findAll(builder.getValue(), pageRequest);
+        } else {
+            pageEvents = eventRepository.findAll(pageRequest);
+        }
+
+        List<Event> events = pageEvents.getContent();
+        setViews(events);
+        return eventMapper.listEventToListEventFullDto(pageEvents.getContent());
+    }
+
+    @Transactional
+    @Override
+    public EventFullDto updateEventAdmin(UpdateEventAdminRequest updateEvent, long eventId) {
+        log.info("The beginning of the process of updates a event by admin");
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
+
+        if (!updateEvent.getAnnotation().isBlank()) {
+            event.setAnnotation(updateEvent.getAnnotation());
+        }
+        if (updateEvent.getCategory() != null) {
+            Category category = categoryRepository.findById(updateEvent.getCategory())
+                    .orElseThrow(() -> new NotFoundException("Category with id=" + updateEvent.getCategory()
+                            + " was not found"));
+            event.setCategory(category);
+        }
+        if (!updateEvent.getDescription().isBlank()) {
+            event.setDescription(updateEvent.getDescription());
+        }
+        if (updateEvent.getEventDate() != null) {
+            if (updateEvent.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+                throw new RestrictionsViolationException("The date and time for which the event is scheduled cannot be " +
+                        "earlier than two hours from the current moment");
+            } else {
+                event.setEventDate(updateEvent.getEventDate());
+            }
+        }
+        if (updateEvent.getLocation() != null) {
+            event.setLocation(updateEvent.getLocation());
+        }
+        if (updateEvent.getPaid() != null) {
+            event.setPaid(updateEvent.getPaid());
+        }
+        if (updateEvent.getParticipantLimit() != null) {
+            event.setParticipantLimit(updateEvent.getParticipantLimit());
+        }
+        if (updateEvent.getRequestModeration() != null) {
+            event.setRequestModeration(updateEvent.getRequestModeration());
+        }
+        if (!updateEvent.getTitle().isBlank()) {
+            event.setTitle(updateEvent.getTitle());
+        }
+        if (updateEvent.getStateAction() != null) {
+            setStateByAdmin(event, updateEvent.getStateAction());
+        }
+
+        log.info("The events was update by admin");
+        return eventMapper.eventToEventFullDto(event);
+    }
+
     private void addViews(List<Event> evt) {
         //TODO Надо дополнить views
         List<ViewStatsDto> stats = getViewStats(evt);
 
+
+    }
+
+    private void setStateByAdmin(Event event, StateActionAdmin stateActionAdmin) {
+        if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1)) &&
+                stateActionAdmin.equals(StateActionAdmin.PUBLISH_EVENT)) {
+            throw new RestrictionsViolationException("The start date of the event to be modified must be no earlier " +
+                    "than one hour from the date of publication.");
+        }
+
+        if (stateActionAdmin.equals(StateActionAdmin.PUBLISH_EVENT)) {
+            if (!event.getState().equals(State.PENDING)) {
+                throw new RestrictionsViolationException("An event can be published only if it is in the waiting state " +
+                        "for publication");
+            }
+            event.setState(State.PUBLISHED);
+            event.setPublishedOn(LocalDateTime.now());
+        } else {
+            if (event.getState().equals(State.PUBLISHED)) {
+                throw new RestrictionsViolationException("AAn event can be rejected only if it has not been " +
+                        "published yet");
+            }
+            event.setState(State.CANCELED);
+        }
 
     }
 
@@ -319,17 +440,12 @@ public class EventServiceImpl implements EventService {
         return viewStatsDto.orElse(Collections.emptyList());
     }
 
-    private void setConfirmedRequestsAndViewsForList(List<EventShortDto> eventsShortDto,
-                                                     Map<Long, Long> mapEventIdAndCountConfirmedRequests,
-                                                     List<ViewStatsDto> viewsStatsDto) {
-        Map<String, Long> mapUriAndHits = viewsStatsDto.stream()
+    private void setViews(List<Event> events) {
+        Map<String, Long> mapUriAndHits = getViewStats(events).stream()
                 .collect(Collectors.toMap(ViewStatsDto::getUri, ViewStatsDto::getHits));
 
-        for (EventShortDto eventShortDto : eventsShortDto) {
-            eventShortDto.setConfirmedRequests(mapEventIdAndCountConfirmedRequests
-                    .getOrDefault(eventShortDto.getId(), 0L));
-            eventShortDto.setViews(mapUriAndHits
-                    .getOrDefault("/events/" + eventShortDto.getId(), 0L));
+        for (Event event : events) {
+            event.setViews(mapUriAndHits.getOrDefault("/events/" + event.getId(), 0L));
         }
     }
 }

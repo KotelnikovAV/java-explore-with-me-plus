@@ -35,7 +35,8 @@ create table if not exists events
     publishedOn         TIMESTAMP,
     requestModeration   BOOLEAN NOT NULL,
     state               varchar NOT NULL,
-    title               varchar NOT NULL
+    title               varchar NOT NULL,
+    confirmed_requests  INTEGER
 );
 
 create table if not exists requests
