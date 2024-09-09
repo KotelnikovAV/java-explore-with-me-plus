@@ -255,10 +255,14 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<EventShortDto> getAllPublicEvents(String text, List<Long> categories, boolean paid,
                                                   LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                   boolean onlyAvailable, EventPublicSort sort, int from, int size) {
+
+        if ((rangeStart != null) && (rangeEnd != null) && (rangeStart.isAfter(rangeEnd))) {
+            throw new RestrictionsViolationException("Start time after end time");
+        }
         Page<Event> events;
         PageRequest pageRequest = getCustomPage(from, size, sort);
         BooleanBuilder builder = new BooleanBuilder();
@@ -272,6 +276,10 @@ public class EventServiceImpl implements EventService {
         }
         if (rangeStart != null && rangeEnd != null) {
             builder.and(event.eventDate.between(rangeStart, rangeEnd));
+        } else if (rangeStart == null && rangeEnd != null) {
+            builder.and(event.eventDate.between(LocalDateTime.MIN, rangeEnd));
+        } else if (rangeStart != null) {
+            builder.and(event.eventDate.between(rangeStart, LocalDateTime.MAX));
         }
         if (onlyAvailable) {
             builder.and(event.participantLimit.eq(0L))
@@ -283,18 +291,17 @@ public class EventServiceImpl implements EventService {
         } else {
             events = eventRepository.findAll(pageRequest);
         }
-        addViews(events.getContent());
+        setViews(events.getContent());
         return eventMapper.listEventToListEventShortDto(events.getContent());
     }
 
     @Override
-    public EventShortDto getPublicEventById(long id) {
-        Event event = eventRepository.findById(id)
+    @Transactional(readOnly = true)
+    public EventFullDto getPublicEventById(long id) {
+        Event event = eventRepository.findByIdAndState(id, State.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + id + " was not found"));
-        //TODO
-        //событие должно быть опубликовано
-        //информация о событии должна включать в себя количество просмотров и количество подтвержденных запросов
-        return null;
+        setViews(List.of(event));
+        return eventMapper.eventToEventFullDto(event);
     }
 
     @Transactional(readOnly = true)
@@ -333,7 +340,7 @@ public class EventServiceImpl implements EventService {
 
         List<Event> events = pageEvents.getContent();
         setViews(events);
-        return eventMapper.listEventToListEventFullDto(pageEvents.getContent());
+        return eventMapper.listEventToListEventFullDto(events);
     }
 
     @Transactional
@@ -385,13 +392,6 @@ public class EventServiceImpl implements EventService {
 
         log.info("The events was update by admin");
         return eventMapper.eventToEventFullDto(event);
-    }
-
-    private void addViews(List<Event> evt) {
-        //TODO Надо дополнить views
-        List<ViewStatsDto> stats = getViewStats(evt);
-
-
     }
 
     private void setStateByAdmin(Event event, StateActionAdmin stateActionAdmin) {

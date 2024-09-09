@@ -28,7 +28,7 @@ public interface EventService {
                                            LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                            boolean onlyAvailable, EventPublicSort sort, int from, int size);
 
-    EventShortDto getPublicEventById(long id);
+    EventFullDto getPublicEventById(long id);
 
     List<EventFullDto> getAllAdminEvents(List<Long> users, State state, List<Long> categories, LocalDateTime rangeStart,
                                          LocalDateTime rangeEnd, int from, int size);
