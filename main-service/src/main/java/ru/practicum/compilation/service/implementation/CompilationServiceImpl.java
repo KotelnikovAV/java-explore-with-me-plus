@@ -42,6 +42,9 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto updateCompilation(long compId, UpdateCompilationRequest request) {
         Compilation compilation = compilationRepository.findById(compId).orElseThrow(
                 () -> new NotFoundException("Compilation with id " + compId + " not found"));
+        if (!CollectionUtils.isEmpty(request.getEvents())) {
+            compilation.setEvents(eventRepository.findAllByIdIn(request.getEvents()));
+        }
         if (request.getPinned() != null) compilation.setPinned(request.getPinned());
         if (request.getTitle() != null) compilation.setTitle(request.getTitle());
         return compilationMapper.toCompilationDto(compilationRepository.save(compilation));

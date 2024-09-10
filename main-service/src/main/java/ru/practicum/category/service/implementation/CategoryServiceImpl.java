@@ -49,7 +49,9 @@ public class CategoryServiceImpl implements CategoryService {
                 () -> new NotFoundException("Category with id=" + catId + " does not exist"));
         categoryRepository.findCategoriesByNameContainingIgnoreCase(
                 newCategory.getName().toLowerCase()).ifPresent(c -> {
-            throw new IntegrityViolationException("Category name " + newCategory.getName() + " already exists");
+            if (c.getId() != catId) {
+                throw new IntegrityViolationException("Category name " + newCategory.getName() + " already exists");
+            }
         });
         updateCategory.setName(newCategory.getName());
         return categoryRepository.save(updateCategory);

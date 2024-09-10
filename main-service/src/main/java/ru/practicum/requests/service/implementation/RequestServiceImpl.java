@@ -57,8 +57,9 @@ public class RequestServiceImpl implements RequestService {
         if (!event.getState().equals(State.PUBLISHED)) {
             throw new IntegrityViolationException("Event with id = " + eventId + " is not published");
         }
+        List<Request> confirmedRequests = requestsRepository.findAllByStatusAndEventId(Status.CONFIRMED, eventId);
         if ((!event.getParticipantLimit().equals(0L))
-                && (event.getConfirmedRequests().equals(event.getParticipantLimit()))) {
+                && (event.getParticipantLimit() == confirmedRequests.size())) {
             throw new IntegrityViolationException("Request limit exceeded");
         }
 
@@ -66,7 +67,7 @@ public class RequestServiceImpl implements RequestService {
         request.setCreated(LocalDateTime.now());
         request.setRequester(user);
         request.setEvent(event);
-        if (event.getParticipantLimit().equals(0L)) {
+        if ((event.getParticipantLimit().equals(0L)) || (!event.getRequestModeration())) {
             request.setStatus(Status.CONFIRMED);
         } else {
             request.setStatus(Status.PENDING);
@@ -82,7 +83,7 @@ public class RequestServiceImpl implements RequestService {
         Request request = requestsRepository.findById(requestId).orElseThrow(() -> new NotFoundException(
                 "Request with id = " + requestId + " not found"
         ));
-        request.setStatus(Status.PENDING);
+        request.setStatus(Status.CANCELED);
         return requestMapper.requestToParticipationRequestDto(requestsRepository.save(request));
     }
 }

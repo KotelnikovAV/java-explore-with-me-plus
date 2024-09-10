@@ -34,6 +34,7 @@ public class ExceptionController {
                 .errors(ExceptionUtils.getStackTrace(e))
                 .build();
     }
+
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {

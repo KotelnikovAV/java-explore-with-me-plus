@@ -1,6 +1,7 @@
 package ru.practicum.requests.controller;
 
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,14 +29,14 @@ public class RequestPrivateController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ParticipationRequestDto addRequest(@PathVariable @Positive Long userId,
-                                              @RequestParam @Positive Long eventId) {
+                                              @RequestParam @PositiveOrZero Long eventId) {
         log.info("addRequest {} for event {}", userId, eventId);
         return requestService.addRequest(userId, eventId);
     }
 
     @PatchMapping("/{requestId}/cancel")
     public ParticipationRequestDto cancelRequest(@PathVariable @Positive Long userId,
-                                                 @PathVariable @Positive Long requestId) {
+                                                 @PathVariable @PositiveOrZero Long requestId) {
         log.info("cancelRequest {} for request {}", userId, requestId);
         return requestService.cancelRequest(userId, requestId);
     }

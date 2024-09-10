@@ -238,9 +238,9 @@ public class EventServiceImpl implements EventService {
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
+        List<Request> confirmedRequests = requestsRepository.findAllByStatusAndEventId(Status.CONFIRMED, eventId);
 
-        if (!(event.getRequestModeration() || event.getParticipantLimit() == 0) && event.getParticipantLimit() <
-                event.getConfirmedRequests() + updateRequests.getRequestIds().size()) {
+        if (event.getParticipantLimit() != 0 && event.getParticipantLimit() == confirmedRequests.size()) {
             throw new RestrictionsViolationException("The limit on applications for this event has been reached, " +
                     "there are " + (event.getParticipantLimit() - event.getConfirmedRequests()) + " free places");
         }
@@ -368,7 +368,7 @@ public class EventServiceImpl implements EventService {
                             + " was not found"));
             event.setCategory(category);
         }
-        if (updateEvent.getDescription() !=null && !updateEvent.getDescription().isBlank()) {
+        if (updateEvent.getDescription() != null && !updateEvent.getDescription().isBlank()) {
             event.setDescription(updateEvent.getDescription());
         }
         if (updateEvent.getEventDate() != null) {
@@ -443,8 +443,8 @@ public class EventServiceImpl implements EventService {
                 .map(event -> "/events/" + event.getId())
                 .toList();
         Optional<List<ViewStatsDto>> viewStatsDto = Optional.ofNullable(statClient
-                .getStats(LocalDateTime.now().minusYears(20), LocalDateTime.now(), url, false)
-                .getBody());
+                .getStats(LocalDateTime.now().minusYears(20), LocalDateTime.now(), url, true)
+        );
         return viewStatsDto.orElse(Collections.emptyList());
     }
 
