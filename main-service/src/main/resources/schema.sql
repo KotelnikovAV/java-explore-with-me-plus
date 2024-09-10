@@ -1,4 +1,4 @@
-drop table if exists users, categories, location;
+drop table if exists users, categories, location, events, requests, compilations, compilations_events;
 
 create table if not exists users
 (
@@ -15,36 +15,36 @@ create table if not exists categories
 
 create table if not exists location
 (
-    id   bigint generated always as identity primary key,
-    lat  float not null,
-    lon  float not null
+    id  bigint generated always as identity primary key,
+    lat float not null,
+    lon float not null
 );
 
 create table if not exists events
 (
-    id                  bigint generated always as identity primary key,
-    annotation          varchar,
-    category_id         INTEGER REFERENCES categories (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    created_on           TIMESTAMP NOT NULL,
-    description         varchar NOT NULL,
-    event_date           TIMESTAMP NOT NULL,
-    initiator_id        INTEGER REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    location_id         INTEGER REFERENCES location (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    paid                BOOLEAN NOT NULL,
-    participant_limit    INTEGER NOT NULL,
-    published_on         TIMESTAMP,
-    request_moderation   BOOLEAN NOT NULL,
-    state               varchar NOT NULL,
-    title               varchar NOT NULL,
-    confirmed_requests  INTEGER
+    id                 bigint generated always as identity primary key,
+    annotation         varchar,
+    category_id        bigint REFERENCES categories (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    created_on         TIMESTAMP NOT NULL,
+    description        varchar   NOT NULL,
+    event_date         TIMESTAMP NOT NULL,
+    initiator_id       bigint REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    location_id        bigint REFERENCES location (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    paid               BOOLEAN   NOT NULL,
+    participant_limit  INTEGER   NOT NULL,
+    published_on       TIMESTAMP,
+    request_moderation BOOLEAN   NOT NULL,
+    state              varchar   NOT NULL,
+    title              varchar   NOT NULL,
+    confirmed_requests INTEGER
 );
 
 create table if not exists requests
 (
     id           bigint generated always as identity primary key,
     created      TIMESTAMP   not null,
-    event_id     INTEGER REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    requester_id INTEGER REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    event_id     bigint REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    requester_id bigint REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
     status       varchar(20) NOT NULL
 );
 create table if not exists compilations

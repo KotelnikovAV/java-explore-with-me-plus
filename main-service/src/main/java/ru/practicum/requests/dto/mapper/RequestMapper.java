@@ -12,7 +12,7 @@ import java.util.List;
 public interface RequestMapper {
     @Mapping(target = "event", source = "event.id")
     @Mapping(target = "requester", source = "requester.id")
-    ParticipationRequestDto listReegquestToListParticipationRequestDto(Request request);
+    ParticipationRequestDto requestToParticipationRequestDto(Request request);
 
     List<ParticipationRequestDto> listRequestToListParticipationRequestDto(List<Request> request);
 }
