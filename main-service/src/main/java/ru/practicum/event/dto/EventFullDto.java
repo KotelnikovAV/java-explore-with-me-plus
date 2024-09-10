@@ -32,6 +32,7 @@ public class EventFullDto {
     Location location;
     Boolean paid;
     Long participantLimit;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = Constants.DATE_TIME_FORMAT)
     LocalDateTime publishedOn;
     Boolean requestModeration;
     State state;

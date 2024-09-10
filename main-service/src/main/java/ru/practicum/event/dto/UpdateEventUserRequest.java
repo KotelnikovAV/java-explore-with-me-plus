@@ -1,6 +1,8 @@
 package ru.practicum.event.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 public class UpdateEventUserRequest {
     @Size(min = 20, max = 2000)
     String annotation;
+    @Positive
     Long category;
     @Size(min = 20, max = 7000)
     String description;
@@ -27,6 +30,7 @@ public class UpdateEventUserRequest {
     LocalDateTime eventDate;
     Location location;
     Boolean paid;
+    @PositiveOrZero
     Long participantLimit;
     Boolean requestModeration;
     @Size(min = 3, max = 120)

@@ -21,6 +21,7 @@ import ru.practicum.event.enums.StateActionAdmin;
 import ru.practicum.event.model.Event;
 import ru.practicum.event.model.State;
 import ru.practicum.event.repository.EventRepository;
+import ru.practicum.exception.DataTimeException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.exception.RestrictionsViolationException;
 import ru.practicum.requests.dto.EventRequestStatusUpdateRequestDto;
@@ -64,8 +65,18 @@ public class EventServiceImpl implements EventService {
                         + " was not found"));
 
         if (newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new RestrictionsViolationException("The date and time for which the event is scheduled cannot be " +
+            throw new DataTimeException("The date and time for which the event is scheduled cannot be " +
                     "earlier than two hours from the current moment");
+        }
+
+        if (newEventDto.getPaid() == null) {
+            newEventDto.setPaid(false);
+        }
+        if (newEventDto.getRequestModeration() == null) {
+            newEventDto.setRequestModeration(true);
+        }
+        if (newEventDto.getParticipantLimit() == null) {
+            newEventDto.setParticipantLimit(0L);
         }
 
         Event newEvent = eventMapper.newEventDtoToEvent(newEventDto);
@@ -79,7 +90,6 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.save(newEvent);
         EventFullDto eventFullDto = eventMapper.eventToEventFullDto(event);
         eventFullDto.setViews(0L);
-        eventFullDto.setConfirmedRequests(0L);
 
         log.info("The event has been created");
         return eventFullDto;
@@ -106,8 +116,6 @@ public class EventServiceImpl implements EventService {
         } else {
             eventFullDto.setViews(0L);
         }
-
-        // statClient.saveHit(????????????);
 
         log.info("The event was found");
         return eventFullDto;
@@ -152,7 +160,7 @@ public class EventServiceImpl implements EventService {
                     "for moderation");
         }
 
-        if (!updateEvent.getAnnotation().isBlank()) {
+        if (updateEvent.getAnnotation() != null && !updateEvent.getAnnotation().isBlank()) {
             event.setAnnotation(updateEvent.getAnnotation());
         }
         if (updateEvent.getCategory() != null) {
@@ -161,12 +169,12 @@ public class EventServiceImpl implements EventService {
                             + " was not found"));
             event.setCategory(category);
         }
-        if (!updateEvent.getDescription().isBlank()) {
+        if (updateEvent.getDescription() != null && !updateEvent.getDescription().isBlank()) {
             event.setDescription(updateEvent.getDescription());
         }
         if (updateEvent.getEventDate() != null) {
             if (updateEvent.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-                throw new RestrictionsViolationException("The date and time for which the event is scheduled cannot be " +
+                throw new DataTimeException("The date and time for which the event is scheduled cannot be " +
                         "earlier than two hours from the current moment");
             } else {
                 event.setEventDate(updateEvent.getEventDate());
@@ -184,7 +192,7 @@ public class EventServiceImpl implements EventService {
         if (updateEvent.getRequestModeration() != null) {
             event.setRequestModeration(updateEvent.getRequestModeration());
         }
-        if (!updateEvent.getTitle().isBlank()) {
+        if (updateEvent.getTitle() != null && !updateEvent.getTitle().isBlank()) {
             event.setTitle(updateEvent.getTitle());
         }
         if (updateEvent.getStateAction() != null) {
@@ -256,12 +264,12 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EventShortDto> getAllPublicEvents(String text, List<Long> categories, boolean paid,
+    public List<EventShortDto> getAllPublicEvents(String text, List<Long> categories, Boolean paid,
                                                   LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                   boolean onlyAvailable, EventPublicSort sort, int from, int size) {
 
         if ((rangeStart != null) && (rangeEnd != null) && (rangeStart.isAfter(rangeEnd))) {
-            throw new RestrictionsViolationException("Start time after end time");
+            throw new DataTimeException("Start time after end time");
         }
         Page<Event> events;
         PageRequest pageRequest = getCustomPage(from, size, sort);
@@ -311,18 +319,18 @@ public class EventServiceImpl implements EventService {
         Page<Event> pageEvents;
         PageRequest pageRequest = getCustomPage(from, size, null);
         BooleanBuilder builder = new BooleanBuilder();
-        if (users != null) {
+        if (!CollectionUtils.isEmpty(users) && !users.contains(0L)) {
             builder.and(event.initiator.id.in(users));
         }
         if (state != null) {
             builder.and(event.state.eq(state));
         }
-        if (!CollectionUtils.isEmpty(categories)) {
+        if (!CollectionUtils.isEmpty(categories) && !categories.contains(0L)) {
             builder.and(event.category.id.in(categories));
         }
         if (rangeStart != null && rangeEnd != null) {
             if (rangeStart.isAfter(rangeEnd)) {
-                throw new RestrictionsViolationException("The start time must be before the end time");
+                throw new DataTimeException("Start time after end time");
             }
 
             builder.and(event.eventDate.between(rangeStart, rangeEnd));
@@ -351,7 +359,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
-        if (!updateEvent.getAnnotation().isBlank()) {
+        if (updateEvent.getAnnotation() != null && !updateEvent.getAnnotation().isBlank()) {
             event.setAnnotation(updateEvent.getAnnotation());
         }
         if (updateEvent.getCategory() != null) {
@@ -360,12 +368,12 @@ public class EventServiceImpl implements EventService {
                             + " was not found"));
             event.setCategory(category);
         }
-        if (!updateEvent.getDescription().isBlank()) {
+        if (updateEvent.getDescription() !=null && !updateEvent.getDescription().isBlank()) {
             event.setDescription(updateEvent.getDescription());
         }
         if (updateEvent.getEventDate() != null) {
             if (updateEvent.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-                throw new RestrictionsViolationException("The date and time for which the event is scheduled cannot be " +
+                throw new DataTimeException("The date and time for which the event is scheduled cannot be " +
                         "earlier than two hours from the current moment");
             } else {
                 event.setEventDate(updateEvent.getEventDate());
@@ -383,7 +391,7 @@ public class EventServiceImpl implements EventService {
         if (updateEvent.getRequestModeration() != null) {
             event.setRequestModeration(updateEvent.getRequestModeration());
         }
-        if (!updateEvent.getTitle().isBlank()) {
+        if (updateEvent.getTitle() != null && !updateEvent.getTitle().isBlank()) {
             event.setTitle(updateEvent.getTitle());
         }
         if (updateEvent.getStateAction() != null) {
@@ -397,7 +405,7 @@ public class EventServiceImpl implements EventService {
     private void setStateByAdmin(Event event, StateActionAdmin stateActionAdmin) {
         if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1)) &&
                 stateActionAdmin.equals(StateActionAdmin.PUBLISH_EVENT)) {
-            throw new RestrictionsViolationException("The start date of the event to be modified must be no earlier " +
+            throw new DataTimeException("The start date of the event to be modified must be no earlier " +
                     "than one hour from the date of publication.");
         }
 
@@ -435,12 +443,15 @@ public class EventServiceImpl implements EventService {
                 .map(event -> "/events/" + event.getId())
                 .toList();
         Optional<List<ViewStatsDto>> viewStatsDto = Optional.ofNullable(statClient
-                .getStats(LocalDateTime.MIN, LocalDateTime.now(), url, false)
+                .getStats(LocalDateTime.now().minusYears(20), LocalDateTime.now(), url, false)
                 .getBody());
         return viewStatsDto.orElse(Collections.emptyList());
     }
 
     private void setViews(List<Event> events) {
+        if (CollectionUtils.isEmpty(events)) {
+            return;
+        }
         Map<String, Long> mapUriAndHits = getViewStats(events).stream()
                 .collect(Collectors.toMap(ViewStatsDto::getUri, ViewStatsDto::getHits));
 

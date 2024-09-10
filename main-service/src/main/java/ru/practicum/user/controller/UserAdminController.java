@@ -38,7 +38,8 @@ public class UserAdminController {
     public UserDto createUser(@RequestBody @Valid UserRequestDto userRequestDto) {
         log.info("Create user: {}", userRequestDto);
         User user = userMapper.fromUserRequestDto(userRequestDto);
-        return userMapper.toDto(userService.createUser(user));
+        User user1 = userService.createUser(user);
+        return userMapper.toDto(user1);
     }
 
     @DeleteMapping("/{userId}")
