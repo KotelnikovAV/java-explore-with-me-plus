@@ -1,11 +1,14 @@
 package ru.practicum.event.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.StatClient;
+import ru.practicum.config.AppConfig;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
@@ -23,6 +26,8 @@ import java.util.List;
 @Validated
 public class EventPrivateController {
     private final EventService eventService;
+    private final StatClient statClient;
+    private final AppConfig appConfig;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -32,15 +37,18 @@ public class EventPrivateController {
     }
 
     @GetMapping("/{eventId}")
-    public EventFullDto findEventById(@PathVariable long userId, @PathVariable long eventId) {
+    public EventFullDto findEventById(@PathVariable long userId,
+                                      @PathVariable long eventId,
+                                      HttpServletRequest request) {
         log.info("Received a GET request to find event by id {} from a user with an userId = {}", eventId, userId);
+        statClient.saveHit(appConfig.getAppName(), request);
         return eventService.findEventById(userId, eventId);
     }
 
     @GetMapping
     public List<EventShortDto> findEventsByUser(@PathVariable long userId,
-                                                @RequestParam(defaultValue = "0") long from,
-                                                @RequestParam(defaultValue = "10") long size) {
+                                                @RequestParam(defaultValue = "0") int from,
+                                                @RequestParam(defaultValue = "10") int size) {
         log.info("Received a GET request to find events by userId = {} from = {} size = {}", userId, from, size);
         return eventService.findEventsByUser(userId, from, size);
     }

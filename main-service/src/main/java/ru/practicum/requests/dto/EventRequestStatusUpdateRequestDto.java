@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.requests.model.Status;
 
-import java.util.List;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -16,7 +16,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EventRequestStatusUpdateRequestDto {
     @NotNull
-    List<Long> requestIds;
+    Set<Long> requestIds;
     @NotNull
     Status status;
 }

@@ -15,27 +15,28 @@ create table if not exists categories
 
 create table if not exists location
 (
-    id  bigint generated always as identity primary key,
-    lat float not null,
-    lon float not null
+    id   bigint generated always as identity primary key,
+    lat  float not null,
+    lon  float not null
 );
 
 create table if not exists events
 (
-    id                bigint generated always as identity primary key,
-    annotation        varchar,
-    category_id       INTEGER REFERENCES categories (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    createdOn         TIMESTAMP NOT NULL,
-    description       varchar   NOT NULL,
-    eventDate         TIMESTAMP NOT NULL,
-    initiator_id      INTEGER REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    location_id       INTEGER REFERENCES location (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    paid              BOOLEAN   NOT NULL,
-    participantLimit  INTEGER   NOT NULL,
-    publishedOn       TIMESTAMP,
-    requestModeration BOOLEAN   NOT NULL,
-    state             varchar   NOT NULL,
-    title             varchar   NOT NULL
+    id                  bigint generated always as identity primary key,
+    annotation          varchar,
+    category_id         INTEGER REFERENCES categories (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    createdOn           TIMESTAMP NOT NULL,
+    description         varchar NOT NULL,
+    eventDate           TIMESTAMP NOT NULL,
+    initiator_id        INTEGER REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    location_id         INTEGER REFERENCES location (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    paid                BOOLEAN NOT NULL,
+    participantLimit    INTEGER NOT NULL,
+    publishedOn         TIMESTAMP,
+    requestModeration   BOOLEAN NOT NULL,
+    state               varchar NOT NULL,
+    title               varchar NOT NULL,
+    confirmed_requests  INTEGER
 );
 
 create table if not exists requests

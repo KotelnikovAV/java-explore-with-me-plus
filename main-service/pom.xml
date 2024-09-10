@@ -17,8 +17,6 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-        <querydsl.version>5.0.0</querydsl.version>
     </properties>
 
     <dependencies>
@@ -72,12 +70,10 @@
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-            <version>${org.mapstruct.version}</version>
         </dependency>
         <dependency>
             <groupId>com.querydsl</groupId>
             <artifactId>querydsl-jpa</artifactId>
-            <version>${querydsl.version}</version>
             <classifier>jakarta</classifier>
         </dependency>
     </dependencies>

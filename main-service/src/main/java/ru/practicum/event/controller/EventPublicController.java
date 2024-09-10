@@ -10,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.StatClient;
 import ru.practicum.config.AppConfig;
+import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.enums.EventPublicSort;
 import ru.practicum.event.service.EventService;
@@ -41,15 +42,16 @@ public class EventPublicController {
                                                   @RequestParam(defaultValue = "false") Boolean onlyAvailable,
                                                   @RequestParam EventPublicSort sort,
                                                   @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-                                                  @RequestParam(defaultValue = "10") @Positive Integer size
-                                                  ) {
+                                                  @RequestParam(defaultValue = "10") @Positive Integer size,
+                                                  HttpServletRequest request) {
         log.info("Get all public events by text {}", text);
+        statClient.saveHit(appConfig.getAppName(), request);
         return eventService.getAllPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
                 sort, from, size);
     }
 
     @GetMapping("/{id}")
-    public EventShortDto getPublicEventById(@PathVariable @Positive Long id, HttpServletRequest request) {
+    public EventFullDto getPublicEventById(@PathVariable @Positive Long id, HttpServletRequest request) {
         log.info("Get public event by id {}", id);
         statClient.saveHit(appConfig.getAppName(), request);
         return eventService.getPublicEventById(id);
