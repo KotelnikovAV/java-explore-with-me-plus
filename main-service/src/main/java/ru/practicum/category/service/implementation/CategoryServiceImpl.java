@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.category.model.Category;
 import ru.practicum.category.repository.CategoryRepository;
 import ru.practicum.category.service.CategoryService;
+import ru.practicum.event.repository.EventRepository;
 import ru.practicum.exception.IntegrityViolationException;
 import ru.practicum.exception.NotFoundException;
 
@@ -19,6 +20,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
+    private final EventRepository eventRepository;
 
     @Override
     @Transactional
@@ -34,7 +36,9 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteCategory(long catId) {
         categoryRepository.findById(catId).orElseThrow(
                 () -> new NotFoundException("Category " + catId + " does not exist"));
-        //TODO Здесь надо сделать проверку на связанные события и вернуть 409
+        if (!eventRepository.findAllByCategoryId(catId).isEmpty()) {
+            throw new IntegrityViolationException("Category " + catId + " already exists");
+        }
         categoryRepository.deleteById(catId);
     }
 

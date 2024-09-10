@@ -14,4 +14,6 @@ public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPre
     Optional<Event> findByIdAndState(Long id, State state);
 
     List<Event> findAllByIdIn(List<Long> ids);
+
+    List<Event> findAllByCategoryId(Long categoryId);
 }
