@@ -24,8 +24,8 @@ public class CategoryAdminController {
     @ResponseStatus(HttpStatus.CREATED)
     public CategoryDto addCategory(@RequestBody @Valid NewCategoryDto newCategoryDto) {
         log.info("Add category: {}", newCategoryDto);
-        Category category = categoryMapper.toCategory(newCategoryDto);
-        return categoryMapper.toCategoryDto(categoryService.addCategory(category));
+        Category category = categoryMapper.newCategoryDtoToCategory(newCategoryDto);
+        return categoryMapper.categoryToCategoryDto(categoryService.addCategory(category));
     }
 
     @DeleteMapping("/{catId}")
@@ -39,7 +39,7 @@ public class CategoryAdminController {
     @ResponseStatus(HttpStatus.OK)
     public CategoryDto updateCategory(@PathVariable long catId, @RequestBody @Valid UpdateCategoryDto dto) {
         log.info("Update category: {}", dto);
-        return categoryMapper.toCategoryDto(
-                categoryService.updateCategory(catId, categoryMapper.fromUpdateCategoryDto(dto)));
+        return categoryMapper.categoryToCategoryDto(
+                categoryService.updateCategory(catId, categoryMapper.updateCategoryDtoToCategory(dto)));
     }
 }

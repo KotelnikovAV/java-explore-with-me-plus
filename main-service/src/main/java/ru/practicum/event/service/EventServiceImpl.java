@@ -133,7 +133,6 @@ public class EventServiceImpl implements EventService {
 
         PageRequest pageRequest = PageRequest.of(from, size);
         BooleanExpression byUserId = event.initiator.id.eq(userId);
-
         Page<Event> pageEvents = eventRepository.findAll(byUserId, pageRequest);
         List<Event> events = pageEvents.getContent();
         setViews(events);
@@ -268,6 +267,7 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getAllPublicEvents(String text, List<Long> categories, Boolean paid,
                                                   LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                   boolean onlyAvailable, EventPublicSort sort, int from, int size) {
+        log.info("The beginning of the process of finding a events by public");
 
         if ((rangeStart != null) && (rangeEnd != null) && (rangeStart.isAfter(rangeEnd))) {
             throw new DataTimeException("Start time after end time");
@@ -280,9 +280,11 @@ public class EventServiceImpl implements EventService {
             builder.and(event.annotation.containsIgnoreCase(text.toLowerCase())
                     .or(event.description.containsIgnoreCase(text.toLowerCase())));
         }
+
         if (!CollectionUtils.isEmpty(categories)) {
             builder.and(event.category.id.in(categories));
         }
+
         if (rangeStart != null && rangeEnd != null) {
             builder.and(event.eventDate.between(rangeStart, rangeEnd));
         } else if (rangeStart == null && rangeEnd != null) {
@@ -290,6 +292,7 @@ public class EventServiceImpl implements EventService {
         } else if (rangeStart != null) {
             builder.and(event.eventDate.between(rangeStart, LocalDateTime.MAX));
         }
+
         if (onlyAvailable) {
             builder.and(event.participantLimit.eq(0L))
                     .or(event.participantLimit.gt(event.confirmedRequests));
@@ -300,16 +303,20 @@ public class EventServiceImpl implements EventService {
         } else {
             events = eventRepository.findAll(pageRequest);
         }
+
         setViews(events.getContent());
+        log.info("The events was found by public");
         return eventMapper.listEventToListEventShortDto(events.getContent());
     }
 
     @Override
     @Transactional(readOnly = true)
     public EventFullDto getPublicEventById(long id) {
+        log.info("The beginning of the process of finding a event by public");
         Event event = eventRepository.findByIdAndState(id, State.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + id + " was not found"));
         setViews(List.of(event));
+        log.info("The event was found by public");
         return eventMapper.eventToEventFullDto(event);
     }
 
@@ -317,23 +324,27 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventFullDto> getAllAdminEvents(List<Long> users, State state, List<Long> categories,
                                                 LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
+        log.info("The beginning of the process of finding a events by admin");
         Page<Event> pageEvents;
         PageRequest pageRequest = getCustomPage(from, size, null);
         BooleanBuilder builder = new BooleanBuilder();
+
         if (!CollectionUtils.isEmpty(users) && !users.contains(0L)) {
             builder.and(event.initiator.id.in(users));
         }
+
         if (state != null) {
             builder.and(event.state.eq(state));
         }
+
         if (!CollectionUtils.isEmpty(categories) && !categories.contains(0L)) {
             builder.and(event.category.id.in(categories));
         }
+
         if (rangeStart != null && rangeEnd != null) {
             if (rangeStart.isAfter(rangeEnd)) {
                 throw new DataTimeException("Start time after end time");
             }
-
             builder.and(event.eventDate.between(rangeStart, rangeEnd));
         } else if (rangeStart == null && rangeEnd != null) {
             builder.and(event.eventDate.between(LocalDateTime.MIN, rangeEnd));
@@ -349,6 +360,7 @@ public class EventServiceImpl implements EventService {
 
         List<Event> events = pageEvents.getContent();
         setViews(events);
+        log.info("The events was found by admin");
         return eventMapper.listEventToListEventFullDto(events);
     }
 

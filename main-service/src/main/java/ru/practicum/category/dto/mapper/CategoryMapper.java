@@ -11,11 +11,11 @@ import java.util.List;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface CategoryMapper {
-    Category toCategory(NewCategoryDto newCategoryDto);
+    Category newCategoryDtoToCategory(NewCategoryDto newCategoryDto);
 
-    CategoryDto toCategoryDto(Category category);
+    CategoryDto categoryToCategoryDto(Category category);
 
-    Category fromUpdateCategoryDto(UpdateCategoryDto updateCategoryDto);
+    Category updateCategoryDtoToCategory(UpdateCategoryDto updateCategoryDto);
 
-    List<CategoryDto> toCategoryDtoList(List<Category> categoryList);
+    List<CategoryDto> listCategoryToListCategoryDto(List<Category> categoryList);
 }

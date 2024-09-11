@@ -8,8 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.StatClient;
-import ru.practicum.config.AppConfig;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.UpdateEventAdminRequest;
 import ru.practicum.event.model.State;
@@ -26,8 +24,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EventAdminController {
     private final EventService eventService;
-    private final StatClient statClient;
-    private final AppConfig appConfig;
 
     @GetMapping
     public List<EventFullDto> getAllAdminEvents(@RequestParam(required = false) List<Long> users,

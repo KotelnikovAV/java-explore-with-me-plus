@@ -1,6 +1,7 @@
-package ru.practicum.compilation.service.implementation;
+package ru.practicum.compilation.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,7 +12,6 @@ import ru.practicum.compilation.dto.UpdateCompilationRequest;
 import ru.practicum.compilation.dto.mapper.CompilationMapper;
 import ru.practicum.compilation.model.Compilation;
 import ru.practicum.compilation.repository.CompilationRepository;
-import ru.practicum.compilation.service.CompilationService;
 import ru.practicum.event.repository.EventRepository;
 import ru.practicum.exception.NotFoundException;
 
@@ -21,6 +21,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
     private final CompilationMapper compilationMapper;
@@ -28,57 +29,77 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public CompilationDto addCompilation(NewCompilationDto compilationDto) {
-        Compilation compilation = compilationMapper.fromNewCompilationDto(compilationDto);
+        log.info("The beginning of the process of creating a compilation");
+        Compilation compilation = compilationMapper.newCompilationDtoToCompilation(compilationDto);
         List<Long> ids = compilationDto.getEvents();
+
         if (!CollectionUtils.isEmpty(ids)) {
             compilation.setEvents(eventRepository.findAllByIdIn(ids));
         } else {
             compilation.setEvents(Collections.emptyList());
         }
-        return compilationMapper.toCompilationDto(compilationRepository.save(compilation));
+
+        Compilation createdCompilation = compilationRepository.save(compilation);
+        log.info("The compilation has been created");
+        return compilationMapper.compilationToCompilationDto(createdCompilation);
     }
 
     @Override
     public CompilationDto updateCompilation(long compId, UpdateCompilationRequest request) {
+        log.info("The beginning of the process of updating a compilation");
         Compilation compilation = compilationRepository.findById(compId).orElseThrow(
                 () -> new NotFoundException("Compilation with id " + compId + " not found"));
+
         if (!CollectionUtils.isEmpty(request.getEvents())) {
             compilation.setEvents(eventRepository.findAllByIdIn(request.getEvents()));
         }
+
         if (request.getPinned() != null) compilation.setPinned(request.getPinned());
+
         if (request.getTitle() != null) compilation.setTitle(request.getTitle());
-        return compilationMapper.toCompilationDto(compilationRepository.save(compilation));
+
+        log.info("The compilation has been updated");
+        return compilationMapper.compilationToCompilationDto(compilation);
     }
 
     @Override
     public void deleteCompilation(long compId) {
+        log.info("The beginning of the process of deleting a compilation");
         compilationRepository.findById(compId).orElseThrow(
                 () -> new NotFoundException("Compilation with id " + compId + " not found"));
         compilationRepository.deleteById(compId);
+        log.info("The compilation has been deleted");
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CompilationDto> getAllCompilations(Boolean pinned, int from, int size) {
+        log.info("The beginning of the process of finding a all compilations");
         PageRequest pageRequest = PageRequest.of(from, size);
+        List<CompilationDto> compilationsDto;
 
         if (pinned == null) {
-            return compilationMapper.toCompilationDtoList(compilationRepository.findAll(pageRequest).getContent());
-        }
-
-        if (pinned) {
-            return compilationMapper.toCompilationDtoList(
+            compilationsDto = compilationMapper.listCompilationToListCompilationDto(compilationRepository
+                    .findAll(pageRequest).getContent());
+        } else if (pinned) {
+            compilationsDto = compilationMapper.listCompilationToListCompilationDto(
                     compilationRepository.findAllByPinnedTrue(pageRequest).getContent());
         } else {
-            return compilationMapper.toCompilationDtoList(
+            compilationsDto = compilationMapper.listCompilationToListCompilationDto(
                     compilationRepository.findAllByPinnedFalse(pageRequest).getContent());
         }
+
+        log.info("The all compilations has been found");
+        return compilationsDto;
     }
 
     @Override
     @Transactional(readOnly = true)
     public CompilationDto getCompilationById(long compId) {
-        return compilationMapper.toCompilationDto(compilationRepository.findById(compId).orElseThrow(
-                () -> new NotFoundException("Compilation with id " + compId + " not found")));
+        log.info("The beginning of the process of finding a all compilations by id");
+        Compilation compilation = compilationRepository.findById(compId).orElseThrow(
+                () -> new NotFoundException("Compilation with id " + compId + " not found"));
+        log.info("The all compilations by id has been found");
+        return compilationMapper.compilationToCompilationDto(compilation);
     }
 }

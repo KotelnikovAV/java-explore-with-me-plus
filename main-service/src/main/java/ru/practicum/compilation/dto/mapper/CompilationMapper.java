@@ -12,10 +12,9 @@ import java.util.List;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface CompilationMapper {
     @Mapping(target = "events", ignore = true)
-    Compilation fromNewCompilationDto(NewCompilationDto newCompilationDto);
+    Compilation newCompilationDtoToCompilation(NewCompilationDto newCompilationDto);
 
-    CompilationDto toCompilationDto(Compilation compilation);
+    CompilationDto compilationToCompilationDto(Compilation compilation);
 
-    List<CompilationDto> toCompilationDtoList(List<Compilation> compilations);
-
+    List<CompilationDto> listCompilationToListCompilationDto(List<Compilation> compilations);
 }

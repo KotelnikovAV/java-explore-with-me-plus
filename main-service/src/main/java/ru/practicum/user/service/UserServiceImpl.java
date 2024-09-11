@@ -1,6 +1,7 @@
-package ru.practicum.user.service.implementation;
+package ru.practicum.user.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -10,40 +11,50 @@ import ru.practicum.exception.IntegrityViolationException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.model.User;
 import ru.practicum.user.repository.UserRepository;
-import ru.practicum.user.service.UserService;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Slf4j
+@Transactional
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public List<User> getAllUsers(List<Long> ids, int from, int size) {
+        log.info("The beginning of the process of finding all users");
         PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Direction.ASC, "id"));
+        List<User> users;
+
         if (CollectionUtils.isEmpty(ids)) {
-            return userRepository.findAll(pageRequest).getContent();
+            users = userRepository.findAll(pageRequest).getContent();
         } else {
-            return userRepository.findAllByIdIn(ids, pageRequest).getContent();
+            users = userRepository.findAllByIdIn(ids, pageRequest).getContent();
         }
+
+        log.info("The user has been found");
+        return users;
     }
 
     @Override
-    @Transactional
     public User createUser(User user) {
+        log.info("The beginning of the process of creating a user");
         userRepository.findUserByEmail(user.getEmail()).ifPresent(u -> {
             throw new IntegrityViolationException("User with email " + u.getEmail() + " already exists");
         });
-        return userRepository.save(user);
+        user = userRepository.save(user);
+        log.info("The user has been created");
+        return user;
     }
 
     @Override
-    @Transactional
     public void deleteUser(long userId) {
+        log.info("The beginning of the process of deleting a user");
         userRepository.findById(userId).orElseThrow(() -> new NotFoundException(
                 "User with id = " + userId + " not found"));
         userRepository.deleteById(userId);
+        log.info("The user has been deleted");
     }
 }

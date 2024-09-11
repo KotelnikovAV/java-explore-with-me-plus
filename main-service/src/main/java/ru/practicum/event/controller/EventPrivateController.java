@@ -40,18 +40,22 @@ public class EventPrivateController {
     @GetMapping("/{eventId}")
     public EventFullDto findEventById(@PathVariable long userId,
                                       @PathVariable long eventId,
-                                      HttpServletRequest request) {
+                                      HttpServletRequest request) throws InterruptedException {
         log.info("Received a GET request to find event by id {} from a user with an userId = {}", eventId, userId);
+        EventFullDto event = eventService.findEventById(userId, eventId);
         statClient.saveHit(appConfig.getAppName(), request);
-        return eventService.findEventById(userId, eventId);
+        return event;
     }
 
     @GetMapping
     public List<EventShortDto> findEventsByUser(@PathVariable long userId,
                                                 @RequestParam(defaultValue = "0") int from,
-                                                @RequestParam(defaultValue = "10") int size) {
+                                                @RequestParam(defaultValue = "10") int size,
+                                                HttpServletRequest request) {
         log.info("Received a GET request to find events by userId = {} from = {} size = {}", userId, from, size);
-        return eventService.findEventsByUser(userId, from, size);
+        List<EventShortDto> events = eventService.findEventsByUser(userId, from, size);
+        statClient.saveHit(appConfig.getAppName(), request);
+        return events;
     }
 
     @PatchMapping("/{eventId}")
@@ -71,8 +75,9 @@ public class EventPrivateController {
     }
 
     @PatchMapping("/{eventId}/requests")
-    public EventRequestStatusUpdateResultDto updateRequestByEventId(@RequestBody @Valid EventRequestStatusUpdateRequestDto
-                                                                            updateRequests,
+    public EventRequestStatusUpdateResultDto updateRequestByEventId(@RequestBody
+                                                                    @Valid
+                                                                    EventRequestStatusUpdateRequestDto updateRequests,
                                                                     @PathVariable long userId,
                                                                     @PathVariable long eventId) {
         log.info("Received a PATCH request to update request with an eventId = {} from a user with an userId = {}, " +

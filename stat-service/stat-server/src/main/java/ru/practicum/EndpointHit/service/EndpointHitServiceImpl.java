@@ -9,6 +9,7 @@ import ru.practicum.Constants;
 import ru.practicum.EndpointHit.model.EndpointHit;
 import ru.practicum.EndpointHit.repository.EndpointHitRepository;
 import ru.practicum.ViewStats.model.ViewStats;
+import ru.practicum.exception.DataTimeException;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -34,18 +35,24 @@ public class EndpointHitServiceImpl implements EndpointHitService {
     public List<ViewStats> findByParams(String start, String end, List<String> uris, boolean unique) {
         log.info("The beginning of the process of obtaining statistics of views");
         List<ViewStats> listViewStats;
+        LocalDateTime startTime = decodeTime(start);
+        LocalDateTime endTime = decodeTime(end);
+
+        if (startTime.isAfter(endTime)) {
+            throw new DataTimeException("The start time must be later than the end time");
+        }
 
         if (CollectionUtils.isEmpty(uris)) {
             uris = endpointHitRepository.findUniqueUri();
         }
 
         if (unique) {
-            listViewStats = endpointHitRepository.findViewStatsByStartAndEndAndUriAndUniqueIp(decodeTime(start),
-                    decodeTime(end),
+            listViewStats = endpointHitRepository.findViewStatsByStartAndEndAndUriAndUniqueIp(startTime,
+                    endTime,
                     uris);
         } else {
-            listViewStats = endpointHitRepository.findViewStatsByStartAndEndAndUri(decodeTime(start),
-                    decodeTime(end),
+            listViewStats = endpointHitRepository.findViewStatsByStartAndEndAndUri(startTime,
+                    endTime,
                     uris);
         }
 

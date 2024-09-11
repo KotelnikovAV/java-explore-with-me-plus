@@ -30,16 +30,16 @@ public class UserAdminController {
                                      @RequestParam(required = false, defaultValue = "0") @PositiveOrZero Integer from,
                                      @RequestParam(required = false, defaultValue = "10") @Positive Integer size) {
         log.info("Get all users");
-        return userMapper.toDtos(userService.getAllUsers(ids, from, size));
+        return userMapper.listUserToListUserDto(userService.getAllUsers(ids, from, size));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto createUser(@RequestBody @Valid UserRequestDto userRequestDto) {
         log.info("Create user: {}", userRequestDto);
-        User user = userMapper.fromUserRequestDto(userRequestDto);
+        User user = userMapper.userRequestDtoToUser(userRequestDto);
         User user1 = userService.createUser(user);
-        return userMapper.toDto(user1);
+        return userMapper.userToUserDto(user1);
     }
 
     @DeleteMapping("/{userId}")
