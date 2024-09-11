@@ -45,15 +45,17 @@ public class EventPublicController {
                                                   @RequestParam(defaultValue = "10") @Positive Integer size,
                                                   HttpServletRequest request) {
         log.info("Get all public events by text {}", text);
+        List<EventShortDto> allPublicEvents = eventService.getAllPublicEvents(text, categories, paid,
+                rangeStart, rangeEnd, onlyAvailable, sort, from, size);
         statClient.saveHit(appConfig.getAppName(), request);
-        return eventService.getAllPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
-                sort, from, size);
+        return allPublicEvents;
     }
 
     @GetMapping("/{id}")
-    public EventFullDto getPublicEventById(@PathVariable @Positive Long id, HttpServletRequest request) {
+    public EventFullDto getPublicEventById(@PathVariable Long id, HttpServletRequest request) {
         log.info("Get public event by id {}", id);
+        EventFullDto publicEventById = eventService.getPublicEventById(id);
         statClient.saveHit(appConfig.getAppName(), request);
-        return eventService.getPublicEventById(id);
+        return publicEventById;
     }
 }
