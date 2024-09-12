@@ -25,7 +25,7 @@ public class ExceptionController {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleCommonException(Exception e) {
-        log.error(ExceptionUtils.getStackTrace(e));
+        log.error("500 {} ", e.getMessage());
         return ApiError.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.name())
                 .reason("Internal Server Error")
@@ -38,7 +38,7 @@ public class ExceptionController {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
-        log.error(ExceptionUtils.getStackTrace(e));
+        log.error("409 {} ", e.getMessage());
         return ApiError.builder()
                 .status(HttpStatus.BAD_REQUEST.name())
                 .reason("Incorrectly made request")
@@ -50,11 +50,11 @@ public class ExceptionController {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleMissingServletRequestParameterException(DataTimeException e) {
-        log.error(ExceptionUtils.getStackTrace(e));
+    public ApiError handleDataTimeException(DataTimeException e) {
+        log.error("409 {} ", e.getMessage());
         return ApiError.builder()
                 .status(HttpStatus.BAD_REQUEST.name())
-                .reason("Incorrectly made request")
+                .reason("Incorrectly made request with date and time")
                 .message(e.getMessage())
                 .timestamp(LocalDateTime.now())
                 .errors(ExceptionUtils.getStackTrace(e))

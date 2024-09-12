@@ -24,9 +24,9 @@ public class CategoryPublicController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<CategoryDto> getAllCategories(@RequestParam(required = false, defaultValue = "0")
+    public List<CategoryDto> getAllCategories(@RequestParam(defaultValue = "0")
                                               @PositiveOrZero Integer from,
-                                              @RequestParam(required = false, defaultValue = "10")
+                                              @RequestParam(defaultValue = "10")
                                               @Positive Integer size) {
         log.info("getAllCategories: from={}, size={}", from, size);
         return categoryMapper.listCategoryToListCategoryDto(categoryService.getAllCategories(from, size));

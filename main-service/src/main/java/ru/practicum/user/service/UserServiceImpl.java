@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import ru.practicum.exception.IntegrityViolationException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.user.dto.UserDto;
+import ru.practicum.user.dto.UserRequestDto;
+import ru.practicum.user.dto.mapper.UserMapper;
 import ru.practicum.user.model.User;
 import ru.practicum.user.repository.UserRepository;
 
@@ -20,10 +23,11 @@ import java.util.List;
 @Transactional
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional(readOnly = true)
-    public List<User> getAllUsers(List<Long> ids, int from, int size) {
+    public List<UserDto> getAllUsers(List<Long> ids, int from, int size) {
         log.info("The beginning of the process of finding all users");
         PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Direction.ASC, "id"));
         List<User> users;
@@ -35,21 +39,24 @@ public class UserServiceImpl implements UserService {
         }
 
         log.info("The user has been found");
-        return users;
+        return userMapper.listUserToListUserDto(users);
     }
 
     @Override
-    public User createUser(User user) {
+    @Transactional
+    public UserDto createUser(UserRequestDto requestDto) {
         log.info("The beginning of the process of creating a user");
+        User user = userMapper.userRequestDtoToUser(requestDto);
         userRepository.findUserByEmail(user.getEmail()).ifPresent(u -> {
             throw new IntegrityViolationException("User with email " + u.getEmail() + " already exists");
         });
-        user = userRepository.save(user);
+        userRepository.save(user);
         log.info("The user has been created");
-        return user;
+        return userMapper.userToUserDto(user);
     }
 
     @Override
+    @Transactional
     public void deleteUser(long userId) {
         log.info("The beginning of the process of deleting a user");
         userRepository.findById(userId).orElseThrow(() -> new NotFoundException(

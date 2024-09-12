@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.user.dto.UserDto;
 import ru.practicum.user.dto.UserRequestDto;
 import ru.practicum.user.dto.mapper.UserMapper;
-import ru.practicum.user.model.User;
 import ru.practicum.user.service.UserService;
 
 import java.util.List;
@@ -27,19 +26,17 @@ public class UserAdminController {
     @GetMapping
     @Validated
     public List<UserDto> getAllUsers(@RequestParam(required = false) List<Long> ids,
-                                     @RequestParam(required = false, defaultValue = "0") @PositiveOrZero Integer from,
-                                     @RequestParam(required = false, defaultValue = "10") @Positive Integer size) {
+                                     @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                     @RequestParam(defaultValue = "10") @Positive Integer size) {
         log.info("Get all users");
-        return userMapper.listUserToListUserDto(userService.getAllUsers(ids, from, size));
+        return (userService.getAllUsers(ids, from, size));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto createUser(@RequestBody @Valid UserRequestDto userRequestDto) {
         log.info("Create user: {}", userRequestDto);
-        User user = userMapper.userRequestDtoToUser(userRequestDto);
-        User user1 = userService.createUser(user);
-        return userMapper.userToUserDto(user1);
+        return (userService.createUser(userRequestDto));
     }
 
     @DeleteMapping("/{userId}")
