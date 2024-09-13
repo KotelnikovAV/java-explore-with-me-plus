@@ -43,7 +43,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
     public UserDto createUser(UserRequestDto requestDto) {
         log.info("The beginning of the process of creating a user");
         User user = userMapper.userRequestDtoToUser(requestDto);
@@ -56,7 +55,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
     public void deleteUser(long userId) {
         log.info("The beginning of the process of deleting a user");
         userRepository.findById(userId).orElseThrow(() -> new NotFoundException(

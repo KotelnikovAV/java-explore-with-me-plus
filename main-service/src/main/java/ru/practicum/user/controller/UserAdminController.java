@@ -29,14 +29,14 @@ public class UserAdminController {
                                      @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
                                      @RequestParam(defaultValue = "10") @Positive Integer size) {
         log.info("Get all users");
-        return (userService.getAllUsers(ids, from, size));
+        return userService.getAllUsers(ids, from, size);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto createUser(@RequestBody @Valid UserRequestDto userRequestDto) {
         log.info("Create user: {}", userRequestDto);
-        return (userService.createUser(userRequestDto));
+        return userService.createUser(userRequestDto);
     }
 
     @DeleteMapping("/{userId}")
