@@ -82,6 +82,10 @@ public class Event {
     @Column(name = "confirmed_requests")
     Long confirmedRequests;
 
+    @NotNull
+    @Column
+    Long rating;
+
     @Transient
     Long views;
 }
