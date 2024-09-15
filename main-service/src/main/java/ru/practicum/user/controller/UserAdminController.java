@@ -32,7 +32,7 @@ public class UserAdminController {
         return userService.getAllUsers(ids, from, size);
     }
 
-    @GetMapping("/like")
+    @GetMapping("/rating")
     public List<UserDto> getAllUsersBySortRating(@RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
                                                  @RequestParam(defaultValue = "10") @Positive Integer size) {
         log.info("Get all users by sort rating");

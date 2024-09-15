@@ -32,7 +32,7 @@ public class LikeController {
                                    @RequestParam StatusLike reaction) {
         log.info("Patch like to an event with eventId = {}, by user with user_id = {}, reaction = {}",
                 eventId, userId, reaction);
-        return likeService.addLike(eventId, userId, reaction);
+        return likeService.updateLike(eventId, userId, reaction);
     }
 
     @DeleteMapping
