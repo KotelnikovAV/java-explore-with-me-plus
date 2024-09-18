@@ -1,10 +1,11 @@
-drop table if exists users, categories, location, events, requests, compilations, compilations_events;
+drop table if exists users, categories, location, events, requests, compilations, compilations_events, likes;
 
 create table if not exists users
 (
-    id    bigint generated always as identity primary key,
-    email varchar(255) not null unique,
-    name  varchar(255) not null
+    id      bigint generated always as identity primary key,
+    email   varchar(255) not null unique,
+    name    varchar(255) not null,
+    rating  INTEGER not null
 );
 
 create table if not exists categories
@@ -36,7 +37,8 @@ create table if not exists events
     request_moderation BOOLEAN   NOT NULL,
     state              varchar   NOT NULL,
     title              varchar   NOT NULL,
-    confirmed_requests INTEGER
+    confirmed_requests INTEGER   NOT NULL,
+    rating             INTEGER   NOT NULL
 );
 
 create table if not exists requests
@@ -47,6 +49,7 @@ create table if not exists requests
     requester_id bigint REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
     status       varchar(20) NOT NULL
 );
+
 create table if not exists compilations
 (
     id     bigint generated always as identity primary key,
@@ -60,3 +63,11 @@ create table if not exists compilations_events
     event_id       bigint references events (id)
 );
 
+create table if not exists likes
+(
+    id         bigint generated always as identity primary key,
+    event_id   bigint REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    user_id    bigint REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    status     varchar(8) NOT NULL,
+    created    TIMESTAMP
+);

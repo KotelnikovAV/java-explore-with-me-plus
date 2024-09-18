@@ -36,10 +36,11 @@ public class EventAdminController {
                                                 @DateTimeFormat(pattern = Constants.DATE_TIME_FORMAT)
                                                 LocalDateTime rangeEnd,
                                                 @RequestParam(defaultValue = "0") @PositiveOrZero int from,
-                                                @RequestParam(defaultValue = "10") @Positive int size) {
+                                                @RequestParam(defaultValue = "10") @Positive int size,
+                                                @RequestParam(defaultValue = "true") Boolean sortRating) {
         log.info("Get all admin events by users {}, state {}, categories {}, rangeStart {}, rangeEnd {}, from {}, " +
-                "size {}", users, state, categories, rangeStart, rangeEnd, from, size);
-        return eventService.getAllAdminEvents(users, state, categories, rangeStart, rangeEnd, from, size);
+                "size {}, sortRating {}", users, state, categories, rangeStart, rangeEnd, from, size, sortRating);
+        return eventService.getAllAdminEvents(users, state, categories, rangeStart, rangeEnd, from, size, sortRating);
     }
 
     @PatchMapping("/{eventId}")

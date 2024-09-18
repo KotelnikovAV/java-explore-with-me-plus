@@ -32,6 +32,13 @@ public class UserAdminController {
         return userService.getAllUsers(ids, from, size);
     }
 
+    @GetMapping("/rating")
+    public List<UserDto> getAllUsersBySortRating(@RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                                 @RequestParam(defaultValue = "10") @Positive Integer size) {
+        log.info("Get all users by sort rating");
+        return userService.getAllUsersBySortRating(from, size);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto createUser(@RequestBody @Valid UserRequestDto userRequestDto) {
